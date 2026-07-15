@@ -2,7 +2,8 @@ const fs = require("fs");
 const path = require("path");
 const { spawn, execSync } = require("child_process");
 
-const USER_NUMBER = "243961046489";
+// Utilise la variable d'environnement ou ton numéro par défaut
+const USER_NUMBER = process.env.USER_NUMBER || "243999368809";
 const GITHUB_REPO = "https://github.com/Erenfx2003/Eren_jaeger.git";
 
 const c = {
@@ -48,8 +49,13 @@ async function progress(label, fn) {
 }
 
 function clean() {
+    // Sécurité supplémentaire : évite de vider accidentellement un dossier racine
+    if (__dirname === "/" || __dirname === "C:\\" || __dirname.includes("System32")) {
+        throw new Error("Dossier de déploiement non sécurisé détecté. Nettoyage annulé.");
+    }
+
     fs.readdirSync(__dirname).forEach(file => {
-        if (file === "deploy.js") return
+        if (file === "deploy.js" || file === ".git") return // Protège le script et Git
         try {
             const p = path.join(__dirname, file)
             fs.statSync(p).isDirectory()
@@ -63,6 +69,7 @@ function setup() {
     ["sessions", "data", "temp", "database"].forEach(d => {
         fs.mkdirSync(path.join(__dirname, d), { recursive: true })
     })
+    
     const cfg = path.join(__dirname, "data", "config.json")
     if (!fs.existsSync(cfg)) {
         fs.writeFileSync(cfg, JSON.stringify({
@@ -73,7 +80,9 @@ function setup() {
             channelLink: "https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R"
         }, null, 2))
     }
-    const ax = path.join(__dirname, "ERENEX", "ERENEX.js")
+
+    // Recherche et modification du fichier de configuration du bot (casse corrigée en "erenex")
+    const ax = path.join(__dirname, "erenex", "erenex.js")
     if (fs.existsSync(ax)) {
         fs.writeFileSync(ax,
             fs.readFileSync(ax, "utf8")
@@ -92,7 +101,8 @@ function installDeps() {
 async function startBot() {
     inf("Démarrage d'EREN JAEGER...")
     try {
-        const { default: connect } = await import("./ERENEX/erenex.js")
+        // Importation avec une casse cohérente en minuscules
+        const { default: connect } = await import("./erenex/erenex.js")
         const { default: handler } = await import("./eren/erens.js")
         await connect(handler)
     } catch(e) {
@@ -103,7 +113,10 @@ async function startBot() {
 
 async function main() {
     banner()
-    inf(`Numéro : ${USER_NUMBER}\n`)
+    // Masque en partie le numéro dans la console pour plus de confidentialité
+    const maskedNumber = USER_NUMBER.replace(/(\d{3})\d+(\d{3})/, "$1******$2")
+    inf(`Numéro configuré : ${maskedNumber}\n`)
+    
     try {
         await progress("Nettoyage", async () => clean())
         await progress("Clonage GitHub", async () => execSync(`git clone ${GITHUB_REPO} .`, { stdio: "pipe" }))
