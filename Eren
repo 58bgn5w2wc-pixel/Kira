@@ -3,26 +3,26 @@ const path = require("path");
 const { spawn, execSync } = require("child_process");
 
 // Utilise la variable d'environnement ou ton numéro par défaut
-const USER_NUMBER = process.env.USER_NUMBER || "243999368809";
+const USER_NUMBER = process.env.USER_NUMBER || "243961046489";
 const GITHUB_REPO = "https://github.com/Erenfx2003/Eren_jaeger.git";
 
+// Palette de couleurs : Rouge, Noir, Gris, Blanc
 const c = {
     reset:  "\x1b[0m",
-    pink:   "\x1b[35m",
-    green:  "\x1b[32m",
-    red:    "\x1b[31m",
-    cyan:   "\x1b[36m",
-    yellow: "\x1b[33m",
-    bold:   "\x1b[1m",
+    red:    "\x1b[31m",  // Rouge (Eren)
+    black:  "\x1b[30m",  // Noir
+    gray:   "\x1b[90m",  // Gris foncé (pour les chargements)
+    white:  "\x1b[97m",  // Blanc brillant (pour les textes importants)
+    bold:   "\x1b[1m",   // Texte en gras
 }
 
-const ok  = (m) => console.log(`${c.green}  ✔  ${m}${c.reset}`)
-const err = (m) => console.log(`${c.red}  ✘  ${m}${c.reset}`)
-const inf = (m) => console.log(`${c.cyan}  ◈  ${m}${c.reset}`)
+const ok  = (m) => console.log(`${c.white}${c.bold}  ✔  ${m}${c.reset}`)
+const err = (m) => console.log(`${c.red}${c.bold}  ✘  ${m}${c.reset}`)
+const inf = (m) => console.log(`${c.gray}  ◈  ${m}${c.reset}`)
 
 function banner() {
     console.clear()
-    console.log(`${c.pink}${c.bold}`)
+    console.log(`${c.red}${c.bold}`)
     console.log(`  ┌────────────────────────────────────┐`)
     console.log(`  │       💀  EREN JAEGER DÉPLOIEMENT  💀   │`)
     console.log(`  └────────────────────────────────────┘`)
@@ -32,30 +32,29 @@ function banner() {
 async function progress(label, fn) {
     const frames = ['⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏']
     let i = 0
-    process.stdout.write(`\r${c.yellow}  ${frames[0]}  ${label}...${c.reset}`)
+    process.stdout.write('\r' + c.gray + '  ' + frames[0] + '  ' + label + '...' + c.reset)
     const timer = setInterval(() => {
-        process.stdout.write(`\r${c.yellow}  ${frames[i++ % frames.length]}  ${label}...${c.reset}`)
+        process.stdout.write('\r' + c.gray + '  ' + frames[i++ % frames.length] + '  ' + label + '...' + c.reset)
     }, 80)
     try {
         const result = await fn()
         clearInterval(timer)
-        process.stdout.write(`\r${c.green}  ✔  ${label}${c.reset}\n`)
+        process.stdout.write('\r' + c.white + '  ✔  ' + label + c.reset + '\n')
         return result
     } catch(e) {
         clearInterval(timer)
-        process.stdout.write(`\r${c.red}  ✘  ${label}${c.reset}\n`)
+        process.stdout.write('\r' + c.red + '  ✘  ' + label + c.reset + '\n')
         throw e
     }
 }
 
 function clean() {
-    // Sécurité supplémentaire : évite de vider accidentellement un dossier racine
     if (__dirname === "/" || __dirname === "C:\\" || __dirname.includes("System32")) {
         throw new Error("Dossier de déploiement non sécurisé détecté. Nettoyage annulé.");
     }
 
     fs.readdirSync(__dirname).forEach(file => {
-        if (file === "deploy.js" || file === ".git") return // Protège le script et Git
+        if (file === "deploy.js" || file === ".git") return 
         try {
             const p = path.join(__dirname, file)
             fs.statSync(p).isDirectory()
@@ -81,7 +80,6 @@ function setup() {
         }, null, 2))
     }
 
-    // Recherche et modification du fichier de configuration du bot (casse corrigée en "erenex")
     const ax = path.join(__dirname, "erenex", "erenex.js")
     if (fs.existsSync(ax)) {
         fs.writeFileSync(ax,
@@ -101,7 +99,6 @@ function installDeps() {
 async function startBot() {
     inf("Démarrage d'EREN JAEGER...")
     try {
-        // Importation avec une casse cohérente en minuscules
         const { default: connect } = await import("./erenex/erenex.js")
         const { default: handler } = await import("./eren/erens.js")
         await connect(handler)
@@ -113,7 +110,6 @@ async function startBot() {
 
 async function main() {
     banner()
-    // Masque en partie le numéro dans la console pour plus de confidentialité
     const maskedNumber = USER_NUMBER.replace(/(\d{3})\d+(\d{3})/, "$1******$2")
     inf(`Numéro configuré : ${maskedNumber}\n`)
     
@@ -122,7 +118,7 @@ async function main() {
         await progress("Clonage GitHub", async () => execSync(`git clone ${GITHUB_REPO} .`, { stdio: "pipe" }))
         await progress("Configuration", async () => setup())
         await progress("Installation des dépendances", () => installDeps())
-        console.log(`\n${c.pink}${c.bold}  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}`)
+        console.log(`\n${c.red}${c.bold}  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}`)
         ok("Déploiement terminé — lancement du bot...\n")
         await startBot()
     } catch(e) {
